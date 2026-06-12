@@ -2558,6 +2558,8 @@ let online = false;
 let initialized = false;
 let activeLeague = null;
 let session = loadSession();
+let ownerUnlockCount = 0;
+let ownerUnlockTimer = null;
 let viewRoundId = sessionStorage.getItem("fantaschedinaViewRound") || null;
 
 const $ = (s) => document.querySelector(s);
@@ -2882,7 +2884,6 @@ function initUiOnce(){
   bind("#showCreate", "click", () => showOnlyBox("createBox"));
   bind("#showJoin", "click", () => showOnlyBox("joinBox"));
   bind("#showAdminLogin", "click", () => showOnlyBox("adminLoginBox"));
-  bind("#showOwnerLogin", "click", () => showOnlyBox("ownerLoginBox"));
   bind("#createLeague", "click", createLeague);
   bind("#joinLeague", "click", joinLeague);
   bind("#adminLogin", "click", adminLogin);
@@ -2895,6 +2896,7 @@ function initUiOnce(){
   bind("#roundSelect", "change", changeCurrentRound);
   bind("#viewRoundSelect", "change", e => setViewRound(e.target.value));
   bind("#importApiResults", "click", importApiResultsForCurrentRound);
+  bind("#ownerSecret", "click", ownerSecretTap);
 
   ["#joinCode", "#joinPlayerName"].forEach(sel => bind(sel, "keydown", e => { if(e.key === "Enter") joinLeague(); }));
   ["#adminCode", "#adminPassword"].forEach(sel => bind(sel, "keydown", e => { if(e.key === "Enter") adminLogin(); }));
@@ -2910,10 +2912,28 @@ function bind(selector, event, handler){
 function readJoinParam(){
   const params = new URLSearchParams(location.search);
   const code = params.get("join");
+  const owner = params.get("owner") || params.get("control");
+  if(owner === "1" || owner === "paolo"){
+    showOnlyBox("ownerLoginBox");
+    setTimeout(() => $("#ownerPassword")?.focus(), 150);
+    return;
+  }
   if(code){
     const input = $("#joinCode");
     if(input) input.value = code.toUpperCase();
     showOnlyBox("joinBox");
+  }
+}
+
+function ownerSecretTap(){
+  ownerUnlockCount += 1;
+  clearTimeout(ownerUnlockTimer);
+  ownerUnlockTimer = setTimeout(() => { ownerUnlockCount = 0; }, 1600);
+  if(ownerUnlockCount >= 5){
+    ownerUnlockCount = 0;
+    showOnlyBox("ownerLoginBox");
+    toast("Centro controllo sbloccato");
+    setTimeout(() => $("#ownerPassword")?.focus(), 150);
   }
 }
 
