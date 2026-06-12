@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>FantaSchedina</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+
+  <main id="loginScreen" class="screen loginScreen">
+    <section class="heroCard">
+      <div class="brandBadge">FS</div>
+      <p class="eyebrow">Pronostici tra amici</p>
+      <h1>FantaSchedina</h1>
+      <p class="subtitle">Crea una lega privata di Serie A 2026/27, invita gli amici e pronosticate 1X2 giornata dopo giornata.</p>
+      <p class="versionBadge">VERSIONE SERIE A AUTOMATICA · NO PARTITE MANUALI</p>
+
+      <div class="statusLine">
+        <span id="dbStatus" class="dbBadge offline">Caricamento...</span>
+      </div>
+
+      <div class="homeActions">
+        <button id="showCreate" class="primaryBtn">Crea competizione</button>
+        <button id="showJoin" class="secondaryBtn">Entra con codice</button>
+        <button id="showAdminLogin" class="ghostBtn">Accesso admin</button>
+      </div>
+    </section>
+
+    <section id="createBox" class="panel hidden">
+      <h2>Crea competizione</h2>
+      <label>Nome competizione</label>
+      <input id="createLeagueName" placeholder="Esempio: Serie A con gli amici" autocomplete="off" />
+      <label>Nome admin</label>
+      <input id="createAdminName" placeholder="Esempio: Paolo" autocomplete="off" />
+      <label>Password admin</label>
+      <input id="createAdminPassword" type="password" placeholder="Scegli una password" autocomplete="new-password" />
+      <button id="createLeague" class="primaryBtn full">Crea</button>
+    </section>
+
+    <section id="joinBox" class="panel hidden">
+      <h2>Entra come giocatore</h2>
+      <label>Codice competizione</label>
+      <input id="joinCode" placeholder="Esempio: ABC123" autocomplete="off" />
+      <label>Il tuo nome</label>
+      <input id="joinPlayerName" placeholder="Esempio: Marco" autocomplete="off" />
+      <button id="joinLeague" class="primaryBtn full">Entra</button>
+    </section>
+
+    <section id="adminLoginBox" class="panel hidden">
+      <h2>Accesso admin</h2>
+      <label>Codice competizione</label>
+      <input id="adminCode" placeholder="Esempio: ABC123" autocomplete="off" />
+      <label>Password admin</label>
+      <input id="adminPassword" type="password" placeholder="Password admin" autocomplete="current-password" />
+      <button id="adminLogin" class="primaryBtn full">Entra come admin</button>
+    </section>
+
+    <section id="createdBox" class="panel successPanel hidden">
+      <h2>Competizione creata ✅</h2>
+      <p class="tiny">Manda questo codice o link ai tuoi amici.</p>
+      <div class="codeBox" id="createdCode">------</div>
+      <input id="createdLink" readonly />
+      <div class="rowButtons">
+        <button id="copyInvite" class="secondaryBtn">Copia link</button>
+        <button id="enterCreatedAdmin" class="primaryBtn">Entra admin</button>
+      </div>
+    </section>
+  </main>
+
+  <main id="appScreen" class="appScreen hidden">
+    <header class="topbar">
+      <div>
+        <p id="roleLabel" class="eyebrow">PLAYER</p>
+        <h1 id="leagueTitle">FantaSchedina</h1>
+        <p id="userLine" class="tiny"></p>
+      </div>
+      <button id="logout" class="smallBtn">Esci</button>
+    </header>
+
+    <nav id="navMenu" class="bottomNav"></nav>
+
+    <section id="pageHome" class="page active">
+      <div class="heroMini">
+        <p class="eyebrow">Giornata attuale</p>
+        <h2 id="homeRoundTitle">Giornata 1</h2>
+        <p id="homeLockState" class="statePill">Aperta</p>
+      </div>
+      <div class="statsGrid">
+        <div class="stat"><span id="statPlayers">0</span><small>Giocatori</small></div>
+        <div class="stat"><span id="statMatches">0</span><small>Partite</small></div>
+        <div class="stat"><span id="statDone">0</span><small>Pronostici</small></div>
+        <div class="stat"><span id="statPoints">0</span><small>Punti</small></div>
+      </div>
+      <div class="panel">
+        <h2>Podio</h2>
+        <div id="podiumList" class="podiumList"></div>
+      </div>
+    </section>
+
+    <section id="pagePredictions" class="page">
+      <div class="sectionHead">
+        <div>
+          <p class="eyebrow">Pronostici</p>
+          <h2 id="predRoundTitle">Giornata 1</h2>
+        </div>
+        <p id="predLockBadge" class="statePill">Aperta</p>
+      </div>
+      <div class="panel compactPanel">
+        <label>Scegli giornata</label>
+        <select id="viewRoundSelect"></select>
+        <p class="tiny">Le 38 giornate sono già caricate: puoi vedere calendario, pronostici e punti di ogni turno.</p>
+      </div>
+      <div id="predictionsList" class="matchList"></div>
+    </section>
+
+    <section id="pageLeaderboard" class="page">
+      <div class="sectionHead">
+        <div>
+          <p class="eyebrow">Classifica</p>
+          <h2>Generale</h2>
+        </div>
+      </div>
+      <div id="leaderboardList" class="leaderboardList"></div>
+    </section>
+
+    <section id="pageRules" class="page">
+      <div class="panel rulesBox">
+        <h2>Regole</h2>
+        <p>Ogni giocatore pronostica il segno finale di ogni partita.</p>
+        <ul>
+          <li><b>1</b> = vince la squadra di casa</li>
+          <li><b>X</b> = pareggio</li>
+          <li><b>2</b> = vince la squadra fuori casa</li>
+        </ul>
+        <p><b>Punteggio:</b> 1 punto per ogni segno corretto, 0 punti per segno sbagliato.</p>
+        <p>Quando l’admin chiude la giornata, i giocatori non possono più modificare i pronostici.</p>
+      </div>
+    </section>
+
+    <section id="pageAdmin" class="page">
+      <div class="sectionHead">
+        <div>
+          <p class="eyebrow">Area admin</p>
+          <h2>Gestione competizione</h2>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Invito amici</h3>
+        <p class="tiny">Codice competizione</p>
+        <div id="adminInviteCode" class="codeBox smallCode">------</div>
+        <input id="adminInviteLink" readonly />
+        <button id="copyInviteAdmin" class="secondaryBtn full">Copia link invito</button>
+      </div>
+
+      <div class="panel">
+        <h3>Giornata Serie A</h3>
+        <p class="tiny">Il calendario Serie A 2026/27 è già caricato: girone di andata 1-19, girone di ritorno 20-38. L’admin sceglie la giornata, apre/chiude i pronostici e importa i risultati da API.</p>
+        <label>Giornata attuale</label>
+        <select id="roundSelect"></select>
+        <button id="toggleRoundLock" class="primaryBtn full">Apri pronostici</button>
+      </div>
+
+      <div class="panel apiPanel">
+        <h3>Risultati automatici da API</h3>
+        <p id="apiImportStatus" class="tiny">Controllo configurazione API...</p>
+        <button id="importApiResults" class="secondaryBtn full">Trova risultati / aggiorna calendario da API</button>
+      </div>
+
+      <div class="panel">
+        <h3>Partite della giornata</h3>
+        <div id="adminMatchesList" class="adminMatchesList"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Risultati</h3>
+        <div id="resultsList" class="resultList"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Giocatori</h3>
+        <div id="playersAdminList" class="playersList"></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
