@@ -22,3 +22,9 @@ export const FOOTBALL_API_CONFIG = {
   competitionCode: "SA",
   season: 2026
 };
+
+// ACCESSO PROPRIETARIO - prima versione frontend.
+// In una fase successiva useremo Firebase Authentication per renderlo più forte.
+export const OWNER_CONFIG = {
+  password: "Baffone10"
+};

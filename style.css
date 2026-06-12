@@ -118,6 +118,7 @@ input:focus,textarea:focus,select:focus{border-color:rgba(96,165,250,.7)}
   box-shadow:var(--shadow);
 }
 .bottomNav.admin{grid-template-columns:repeat(5,1fr)}
+.bottomNav.owner{grid-template-columns:1fr}
 .navBtn{
   padding:11px 6px;border-radius:16px;font-size:12px;
   background:transparent;color:var(--muted);
@@ -194,4 +195,25 @@ input:focus,textarea:focus,select:focus{border-color:rgba(96,165,250,.7)}
 .apiPanel .secondaryBtn{margin-top:10px}
 @media (max-width:520px){
   .adminMatchRow{grid-template-columns:34px 1fr;padding:10px}
+}
+
+
+/* Centro controllo proprietario */
+.ownerAccessBtn{font-size:12px}
+.ownerHero{display:flex;justify-content:space-between;gap:14px;align-items:center}
+.ownerStatsGrid{margin-top:0}
+.ownerStatusGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.ownerStatusItem,.ownerLeagueRow{
+  background:rgba(255,255,255,.07);border:1px solid var(--line);
+  border-radius:18px;padding:13px;
+}
+.ownerStatusItem b{display:block;margin-bottom:4px}
+.ownerLeaguesList{display:grid;gap:10px}
+.ownerLeagueRow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.ownerLeagueMeta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.ownerChip{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:5px 8px;color:var(--muted);font-size:12px;font-weight:800;background:rgba(0,0,0,.14)}
+.ownerDanger{background:rgba(251,113,133,.14);color:#fecdd3;border:1px solid rgba(251,113,133,.35);padding:9px 12px;border-radius:12px}
+@media (max-width:520px){
+  .ownerStatusGrid{grid-template-columns:1fr}
+  .ownerLeagueRow{grid-template-columns:1fr}
 }

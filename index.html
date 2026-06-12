@@ -25,6 +25,7 @@
         <button id="showCreate" class="primaryBtn">Crea competizione</button>
         <button id="showJoin" class="secondaryBtn">Entra con codice</button>
         <button id="showAdminLogin" class="ghostBtn">Accesso admin</button>
+        <button id="showOwnerLogin" class="ghostBtn ownerAccessBtn">Centro controllo proprietario</button>
       </div>
     </section>
 
@@ -57,6 +58,14 @@
       <button id="adminLogin" class="primaryBtn full">Entra come admin</button>
     </section>
 
+    <section id="ownerLoginBox" class="panel hidden">
+      <h2>Centro controllo proprietario</h2>
+      <p class="tiny">Accesso riservato al proprietario del sito.</p>
+      <label>Password proprietario</label>
+      <input id="ownerPassword" type="password" placeholder="Password proprietario" autocomplete="current-password" />
+      <button id="ownerLogin" class="primaryBtn full">Entra nel centro controllo</button>
+    </section>
+
     <section id="createdBox" class="panel successPanel hidden">
       <h2>Competizione creata ✅</h2>
       <p class="tiny">Manda questo codice o link ai tuoi amici.</p>
@@ -67,6 +76,7 @@
         <button id="enterCreatedAdmin" class="primaryBtn">Entra admin</button>
       </div>
     </section>
+
   </main>
 
   <main id="appScreen" class="appScreen hidden">
@@ -182,6 +192,40 @@
       <div class="panel">
         <h3>Giocatori</h3>
         <div id="playersAdminList" class="playersList"></div>
+      </div>
+    </section>
+    <section id="pageOwner" class="page">
+      <div class="sectionHead">
+        <div>
+          <p class="eyebrow">Proprietario sito</p>
+          <h2>Centro Controllo</h2>
+        </div>
+      </div>
+
+      <div class="ownerHero panel">
+        <div>
+          <p class="eyebrow">Stato piattaforma</p>
+          <h2 id="ownerMainStatus">Dashboard pronta</h2>
+          <p id="ownerLastActivity" class="tiny">Ultima attività: -</p>
+        </div>
+      </div>
+
+      <div class="statsGrid ownerStatsGrid">
+        <div class="stat"><span id="ownerTotalLeagues">0</span><small>Competizioni</small></div>
+        <div class="stat"><span id="ownerTotalPlayers">0</span><small>Giocatori</small></div>
+        <div class="stat"><span id="ownerTotalPredictions">0</span><small>Pronostici</small></div>
+        <div class="stat"><span id="ownerTotalResults">0</span><small>Risultati</small></div>
+      </div>
+
+      <div class="panel">
+        <h3>Stato tecnico</h3>
+        <div id="ownerTechStatus" class="ownerStatusGrid"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Competizioni create</h3>
+        <p class="tiny">Qui vedi tutte le leghe salvate nel database. Puoi eliminare le competizioni di test.</p>
+        <div id="ownerLeaguesList" class="ownerLeaguesList"></div>
       </div>
     </section>
   </main>

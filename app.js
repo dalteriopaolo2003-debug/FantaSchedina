@@ -1,4 +1,4 @@
-import { firebaseConfig, DATABASE_PATH, FOOTBALL_API_CONFIG } from "./firebase-config.js";
+import { firebaseConfig, DATABASE_PATH, FOOTBALL_API_CONFIG, OWNER_CONFIG } from "./firebase-config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getDatabase, ref, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
@@ -2808,7 +2808,9 @@ async function initDatabase(){
 
 function afterDbReady(){
   readJoinParam();
-  if(session.role && session.leagueCode && rootDb.leagues?.[session.leagueCode]){
+  if(session.role === "owner"){
+    enterApp();
+  }else if(session.role && session.leagueCode && rootDb.leagues?.[session.leagueCode]){
     enterApp();
   }else{
     showLogin();
@@ -2880,9 +2882,11 @@ function initUiOnce(){
   bind("#showCreate", "click", () => showOnlyBox("createBox"));
   bind("#showJoin", "click", () => showOnlyBox("joinBox"));
   bind("#showAdminLogin", "click", () => showOnlyBox("adminLoginBox"));
+  bind("#showOwnerLogin", "click", () => showOnlyBox("ownerLoginBox"));
   bind("#createLeague", "click", createLeague);
   bind("#joinLeague", "click", joinLeague);
   bind("#adminLogin", "click", adminLogin);
+  bind("#ownerLogin", "click", ownerLogin);
   bind("#copyInvite", "click", () => copyText($("#createdLink")?.value || ""));
   bind("#enterCreatedAdmin", "click", enterCreatedAdmin);
   bind("#copyInviteAdmin", "click", () => copyText($("#adminInviteLink")?.value || ""));
@@ -2894,6 +2898,7 @@ function initUiOnce(){
 
   ["#joinCode", "#joinPlayerName"].forEach(sel => bind(sel, "keydown", e => { if(e.key === "Enter") joinLeague(); }));
   ["#adminCode", "#adminPassword"].forEach(sel => bind(sel, "keydown", e => { if(e.key === "Enter") adminLogin(); }));
+  bind("#ownerPassword", "keydown", e => { if(e.key === "Enter") ownerLogin(); });
   ["#createLeagueName", "#createAdminName", "#createAdminPassword"].forEach(sel => bind(sel, "keydown", e => { if(e.key === "Enter") createLeague(); }));
 }
 
@@ -2913,7 +2918,7 @@ function readJoinParam(){
 }
 
 function showOnlyBox(id){
-  ["createBox", "joinBox", "adminLoginBox", "createdBox"].forEach(box => {
+  ["createBox", "joinBox", "adminLoginBox", "ownerLoginBox", "createdBox"].forEach(box => {
     const el = document.getElementById(box);
     if(el) el.classList.toggle("hidden", box !== id);
   });
@@ -2983,6 +2988,15 @@ function adminLogin(){
   enterApp();
 }
 
+function ownerLogin(){
+  const password = $("#ownerPassword")?.value.trim();
+  const expected = OWNER_CONFIG?.password || "Baffone10";
+  if(password !== expected) return toast("Password proprietario errata", true);
+  session = { role:"owner", name:"Paolo" };
+  saveSession();
+  enterApp();
+}
+
 function enterApp(){
   $("#loginScreen")?.classList.add("hidden");
   $("#appScreen")?.classList.remove("hidden");
@@ -2992,15 +3006,19 @@ function enterApp(){
 
 function buildNav(){
   const isAdmin = session.role === "admin";
-  const items = isAdmin
-    ? [["Home","pageHome"],["Pronostici","pagePredictions"],["Classifica","pageLeaderboard"],["Regole","pageRules"],["Admin","pageAdmin"]]
-    : [["Home","pageHome"],["Pronostici","pagePredictions"],["Classifica","pageLeaderboard"],["Regole","pageRules"]];
+  const isOwner = session.role === "owner";
+  const items = isOwner
+    ? [["Centro","pageOwner"]]
+    : isAdmin
+      ? [["Home","pageHome"],["Pronostici","pagePredictions"],["Classifica","pageLeaderboard"],["Regole","pageRules"],["Admin","pageAdmin"]]
+      : [["Home","pageHome"],["Pronostici","pagePredictions"],["Classifica","pageLeaderboard"],["Regole","pageRules"]];
   const nav = $("#navMenu");
   if(!nav) return;
   nav.classList.toggle("admin", isAdmin);
+  nav.classList.toggle("owner", isOwner);
   nav.innerHTML = items.map((it, i) => `<button class="navBtn ${i===0 ? "active" : ""}" data-page="${it[1]}">${it[0]}</button>`).join("");
   $$(".navBtn").forEach(btn => btn.onclick = () => goPage(btn.dataset.page));
-  goPage("pageHome");
+  goPage(isOwner ? "pageOwner" : "pageHome");
 }
 
 function goPage(pageId){
@@ -3010,6 +3028,10 @@ function goPage(pageId){
 }
 
 function renderAll(){
+  if(session.role === "owner"){
+    renderOwnerDashboard();
+    return;
+  }
   const league = currentLeague();
   if(!session.role || !league) return;
   const round = currentRound();
@@ -3427,6 +3449,113 @@ function copyText(text){
     tmp.remove();
     toast("Link copiato");
   }
+}
+
+
+function allLeaguesForOwner(){
+  return Object.entries(rootDb.leagues || {}).map(([code, raw]) => ({ code, league: normalizeLeague(raw), raw: raw || {} }));
+}
+
+function countLeaguePredictions(league){
+  return Object.values(league.rounds || {}).reduce((sum, round) => {
+    return sum + Object.values(round.predictions || {}).reduce((inner, picks) => inner + Object.keys(picks || {}).length, 0);
+  }, 0);
+}
+
+function countLeagueResults(league){
+  return Object.values(league.rounds || {}).reduce((sum, round) => sum + Object.keys(round.results || {}).length, 0);
+}
+
+function leagueLastActivity(raw, league){
+  const stamps = [league.meta?.updatedAt, league.meta?.createdAt];
+  Object.values(league.players || {}).forEach(p => stamps.push(p?.createdAt));
+  Object.values(league.rounds || {}).forEach(round => {
+    Object.values(round.results || {}).forEach(r => stamps.push(r?.importedAt));
+  });
+  return Math.max(...stamps.map(Number).filter(Boolean), 0);
+}
+
+function formatDateTime(value){
+  const n = Number(value || 0);
+  if(!n) return "-";
+  return new Date(n).toLocaleString("it-IT", { day:"2-digit", month:"2-digit", year:"2-digit", hour:"2-digit", minute:"2-digit" });
+}
+
+function renderOwnerDashboard(){
+  setText("#leagueTitle", "Centro Controllo");
+  setText("#roleLabel", "PROPRIETARIO");
+  setText("#userLine", "Paolo · controllo piattaforma");
+
+  const leagues = allLeaguesForOwner();
+  const totals = leagues.reduce((acc, item) => {
+    acc.players += Object.keys(item.league.players || {}).length;
+    acc.predictions += countLeaguePredictions(item.league);
+    acc.results += countLeagueResults(item.league);
+    acc.last = Math.max(acc.last, leagueLastActivity(item.raw, item.league));
+    return acc;
+  }, { players:0, predictions:0, results:0, last:0 });
+
+  setText("#ownerTotalLeagues", leagues.length);
+  setText("#ownerTotalPlayers", totals.players);
+  setText("#ownerTotalPredictions", totals.predictions);
+  setText("#ownerTotalResults", totals.results);
+  setText("#ownerMainStatus", leagues.length ? "Piattaforma attiva" : "Nessuna competizione creata");
+  setText("#ownerLastActivity", `Ultima attività: ${formatDateTime(totals.last)}`);
+
+  renderOwnerTechStatus();
+  renderOwnerLeagues(leagues);
+}
+
+function renderOwnerTechStatus(){
+  const wrap = $("#ownerTechStatus");
+  if(!wrap) return;
+  const apiConfigured = FOOTBALL_API_CONFIG?.token && !String(FOOTBALL_API_CONFIG.token).includes("INCOLLA");
+  const items = [
+    ["Database", online ? "Online Firebase" : "Locale / non online"],
+    ["Percorso dati", DATABASE_PATH],
+    ["API risultati", apiConfigured ? "Configurata" : "Chiave API mancante"],
+    ["Competizione API", `${FOOTBALL_API_CONFIG?.competitionCode || "SA"} · stagione ${FOOTBALL_API_CONFIG?.season || 2026}`]
+  ];
+  wrap.innerHTML = items.map(([title, value]) => `<div class="ownerStatusItem"><b>${escapeHtml(title)}</b><span class="tiny">${escapeHtml(value)}</span></div>`).join("");
+}
+
+function renderOwnerLeagues(leagues){
+  const wrap = $("#ownerLeaguesList");
+  if(!wrap) return;
+  if(!leagues.length){
+    wrap.innerHTML = `<div class="emptyBox">Ancora nessuna competizione creata.</div>`;
+    return;
+  }
+  const sorted = leagues.slice().sort((a,b) => leagueLastActivity(b.raw,b.league) - leagueLastActivity(a.raw,a.league));
+  wrap.innerHTML = sorted.map(({code, league, raw}) => {
+    const players = Object.keys(league.players || {}).length;
+    const predictions = countLeaguePredictions(league);
+    const results = countLeagueResults(league);
+    const last = formatDateTime(leagueLastActivity(raw, league));
+    return `<div class="ownerLeagueRow">
+      <div>
+        <b>${escapeHtml(league.meta.name)}</b><br>
+        <span class="tiny">Codice ${escapeHtml(code)} · Admin ${escapeHtml(league.meta.adminName)} · Giornata ${escapeHtml(league.meta.currentRound)}</span>
+        <div class="ownerLeagueMeta">
+          <span class="ownerChip">${players} giocatori</span>
+          <span class="ownerChip">${predictions} pronostici</span>
+          <span class="ownerChip">${results} risultati</span>
+          <span class="ownerChip">Ultima attività ${escapeHtml(last)}</span>
+        </div>
+      </div>
+      <button class="ownerDanger deleteLeague" data-code="${escapeAttr(code)}">Elimina test</button>
+    </div>`;
+  }).join("");
+  $$(".deleteLeague").forEach(btn => btn.onclick = () => deleteLeagueAsOwner(btn.dataset.code));
+}
+
+async function deleteLeagueAsOwner(code){
+  if(session.role !== "owner") return;
+  const raw = rootDb.leagues?.[code];
+  const name = raw?.meta?.name || code;
+  if(!confirm(`Eliminare definitivamente la competizione "${name}"?`)) return;
+  await removePath(`leagues/${code}`);
+  toast("Competizione eliminata");
 }
 
 window.addEventListener("error", e => {

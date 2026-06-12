@@ -35,3 +35,12 @@ Per provarlo su Mac:
 
 Se vedi ancora la vecchia pagina, stai aprendo la vecchia cartella o un vecchio server ancora acceso.
 Chiudi i vecchi server con CTRL+C nel Terminale.
+
+AGGIORNAMENTO - CENTRO CONTROLLO PROPRIETARIO
+- Aggiunta area riservata proprietario dal login.
+- Password proprietario iniziale: Baffone10
+- La dashboard mostra: competizioni totali, giocatori totali, pronostici totali, risultati totali, stato Firebase/API e lista leghe.
+- Dalla dashboard proprietario puoi eliminare competizioni di test.
+
+NOTA SICUREZZA:
+Questa è una prima versione frontend. Per sicurezza professionale al 100% servirà Firebase Authentication con ruoli proprietario/admin/giocatore.
